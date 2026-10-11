@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>لوحة الدعوة — وليد &amp; ملاك</title>
+  <link rel="icon" type="image/png" href="assets/favicon-48.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/fonts.css">
+  <style>
+    :root {
+      --bg: #f6ece8; --card: #fffaf8; --line: #ead8d2; --ink: #2b1d22; --muted: #7d6870;
+      --purple: #7b5a8f; --purple-2: #ece3f2; --ok: #3f8a5f; --ok-bg: #e5f3ea; --no: #a5465c; --no-bg: #f8e4e8;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body { background: var(--bg); color: var(--ink); font: 14px/1.6 'Changa', 'Noto Sans Arabic', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    button, input { font: inherit; }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 24px 16px 60px; }
+    header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    header img { width: 44px; height: 44px; object-fit: contain; }
+    header h1 { margin: 0; font-size: 20px; font-weight: 500; color: var(--purple); }
+    header p { margin: 0; font-size: 12.5px; color: var(--muted); }
+    header .sp { flex: 1; }
+    .btn { border: 1px solid var(--line); background: var(--card); color: var(--ink); padding: 7px 14px; border-radius: 10px; cursor: pointer; }
+    .btn:hover { border-color: #d7bdb5; }
+    .btn--p { background: var(--purple); border-color: var(--purple); color: #fff; }
+    .login { max-width: 360px; margin: 12vh auto 0; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 28px 22px; text-align: center; }
+    .login img { width: 70px; height: 70px; object-fit: contain; }
+    .login h2 { margin: 6px 0 2px; font-weight: 500; color: var(--purple); }
+    .login input { width: 100%; margin: 16px 0 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; direction: ltr; text-align: center; }
+    .login .btn { width: 100%; padding: 10px; }
+    .err { min-height: 20px; color: var(--no); font-size: 12.5px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 12px; }
+    .stat { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+    .stat b { display: block; font-size: 28px; font-weight: 500; color: var(--purple); line-height: 1.2; font-variant-numeric: tabular-nums; }
+    .stat span { font-size: 12.5px; color: var(--muted); }
+    .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-top: 16px; }
+    .panel h2 { margin: 0 0 12px; font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+    .panel h2 small { color: var(--muted); font-weight: 400; }
+    .panel h2 .sp { flex: 1; }
+    .chart { display: flex; justify-content: center; align-items: flex-end; gap: 3px; height: 120px; padding-top: 6px; direction: ltr; }
+    .chart div { flex: 1; min-width: 4px; max-width: 34px; background: #c7b2d6; border-radius: 4px 4px 0 0; position: relative; }
+    .chart div:hover { background: var(--purple); }
+    .chart-x { display: flex; justify-content: space-between; direction: ltr; font-size: 11px; color: var(--muted); margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: right; padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { font-weight: 500; font-size: 12px; color: var(--muted); }
+    tr:last-child td { border-bottom: 0; }
+    td.num { font-variant-numeric: tabular-nums; }
+    .pill { display: inline-block; padding: 1px 10px; border-radius: 999px; font-size: 12px; }
+    .pill.yes { background: var(--ok-bg); color: var(--ok); }
+    .pill.no { background: var(--no-bg); color: var(--no); }
+    .muted { color: var(--muted); font-size: 12px; }
+    .wish { padding: 10px 0; border-bottom: 1px solid var(--line); display: flex; gap: 10px; align-items: flex-start; }
+    .wish:last-child { border-bottom: 0; }
+    .wish p { margin: 0; flex: 1; unicode-bidi: plaintext; }
+    .wish.hidden p { opacity: .45; text-decoration: line-through; }
+    .wish .act { display: flex; gap: 6px; }
+    .wish .act button, td button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 2px 10px; font-size: 12px; cursor: pointer; color: var(--ink); }
+    .wish .act button.del, td button.del { color: var(--no); }
+    .scroll { max-height: 520px; overflow: auto; }
+    .empty { color: var(--muted); text-align: center; padding: 18px 0; }
+    [hidden] { display: none !important; }
+    @media (max-width: 560px) { th:nth-child(4), td:nth-child(4) { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="login" id="login">
+      <img src="assets/monogram.png" alt="">
+      <h2>لوحة الدعوة</h2>
+      <p class="muted">وليد &amp; ملاك</p>
+      <form id="loginForm">
+        <input id="token" type="password" placeholder="كلمة المرور (ADMIN_TOKEN)" autocomplete="current-password" required>
+        <div class="err" id="loginErr"></div>
+        <button class="btn btn--p" type="submit">دخول</button>
+      </form>
+    </section>
+
+    <main id="dash" hidden>
+      <header>
+        <img src="assets/monogram.png" alt="">
+        <div><h1>وليد &amp; ملاك</h1><p id="updated">—</p></div>
+        <span class="sp"></span>
+        <button class="btn" id="refresh" type="button">تحديث</button>
+        <button class="btn" id="logout" type="button">خروج</button>
+      </header>
+
+      <div class="grid">
+        <div class="stat"><b id="sViews">0</b><span>مرات المشاهدة</span></div>
+        <div class="stat"><b id="sUnique">0</b><span>زوار مختلفين</span></div>
+        <div class="stat"><b id="sOpened">0</b><span>فتحوا الدعوة</span></div>
+        <div class="stat"><b id="sGuests">0</b><span>عدد الحضور المؤكد</span></div>
+        <div class="stat"><b id="sYes">0</b><span>ردود «سأحضر»</span></div>
+        <div class="stat"><b id="sNo">0</b><span>اعتذارات</span></div>
+      </div>
+
+      <section class="panel">
+        <h2>زوار جدد يومياً <small id="tz"></small></h2>
+        <div class="chart" id="chart"></div>
+        <div class="chart-x"><span id="cFrom"></span><span id="cTo"></span></div>
+      </section>
+
+      <section class="panel">
+        <h2>تأكيدات الحضور <span class="sp"></span><button class="btn" id="csv" type="button">تصدير CSV</button></h2>
+        <div class="scroll">
+          <table>
+            <thead><tr><th>الاسم</th><th>الرد</th><th>العدد</th><th>التاريخ</th><th></th></tr></thead>
+            <tbody id="rsvpBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>التهاني <small id="wCount"></small></h2>
+        <div class="scroll" id="wishBody"></div>
+      </section>
+    </main>
+  </div>
+
+<script>
+(function () {
+  'use strict';
+  var KEY = 'invite-admin-token';
+  var $ = function (id) { return document.getElementById(id); };
+  var token = '';
+  try { token = sessionStorage.getItem(KEY) || ''; } catch (e) {}
+  var data = null;
+
+  function api(method, path, body) {
+    var init = { method: method, headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' } };
+    if (body) { init.headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(body); }
+    return fetch('/api/admin' + (path || ''), init).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (d) {
+        if (!r.ok) { var e = new Error(d.message || 'HTTP ' + r.status); e.status = r.status; throw e; }
+        return d;
+      });
+    });
+  }
+  function fmt(d) {
+    if (!d) return '—';
+    try { return new Date(d).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return String(d); }
+  }
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+
+  function showLogin(msg) {
+    $('dash').hidden = true; $('login').hidden = false; $('loginErr').textContent = msg || '';
+  }
+  function load() {
+    return api('GET').then(function (d) { data = d; render(); $('login').hidden = true; $('dash').hidden = false; })
+      .catch(function (e) {
+        if (e.status === 401) { try { sessionStorage.removeItem(KEY); } catch (x) {} showLogin('كلمة المرور غير صحيحة'); }
+        else if (e.status === 429) showLogin('محاولات كثيرة، انتظر 15 دقيقة');
+        else showLogin(e.message);
+      });
+  }
+
+  function render() {
+    var d = data;
+    $('sViews').textContent = d.views.total; $('sUnique').textContent = d.views.unique; $('sOpened').textContent = d.views.opened;
+    $('sGuests').textContent = d.rsvp.attendingGuests; $('sYes').textContent = d.rsvp.yes; $('sNo').textContent = d.rsvp.no;
+    $('updated').textContent = 'آخر تحديث: ' + fmt(new Date()) + (d.views.lastSeen ? ' — آخر زيارة: ' + fmt(d.views.lastSeen) : '');
+    $('tz').textContent = '(' + d.timezone + ')';
+
+    // daily chart — fill missing days
+    var chart = $('chart'); chart.textContent = '';
+    var days = d.daily, map = {};
+    days.forEach(function (x) { map[x.day] = x.visitors; });
+    var series = [];
+    if (days.length) {
+      var start = new Date(days[0].day + 'T12:00:00Z'), end = new Date(days[days.length - 1].day + 'T12:00:00Z');
+      for (var t = start; t <= end; t = new Date(t.getTime() + 86400000)) {
+        var k = t.toISOString().slice(0, 10); series.push({ day: k, n: map[k] || 0 });
+      }
+    }
+    var max = Math.max.apply(null, series.map(function (s) { return s.n; }).concat([1]));
+    series.forEach(function (s) {
+      var bar = el('div'); bar.style.height = Math.max(3, (s.n / max) * 100) + '%'; bar.title = s.day + ': ' + s.n; chart.appendChild(bar);
+    });
+    if (!series.length) chart.appendChild(el('p', 'empty', 'لا توجد زيارات بعد'));
+    $('cFrom').textContent = series.length ? series[0].day : '';
+    $('cTo').textContent = series.length > 1 ? series[series.length - 1].day : '';
+
+    // rsvps
+    var tb = $('rsvpBody'); tb.textContent = '';
+    if (!d.rsvp.list.length) { var tr0 = el('tr'); var td0 = el('td', 'empty', 'لا توجد ردود بعد'); td0.colSpan = 5; tr0.appendChild(td0); tb.appendChild(tr0); }
+    d.rsvp.list.forEach(function (r) {
+      var tr = el('tr');
+      tr.appendChild(el('td', '', r.name));
+      var st = el('td'); st.appendChild(el('span', 'pill ' + (r.attend === 'yes' ? 'yes' : 'no'), r.attend === 'yes' ? 'سيحضر' : 'معتذر')); tr.appendChild(st);
+      tr.appendChild(el('td', 'num', r.attend === 'yes' ? String(r.guests) : '—'));
+      tr.appendChild(el('td', 'muted', fmt(r.at)));
+      var act = el('td'); var b = el('button', 'del', 'حذف');
+      b.onclick = function () { if (confirm('حذف رد «' + r.name + '»؟')) api('DELETE', '?type=rsvp&id=' + r.id).then(load).catch(function (e) { alert(e.message); }); };
+      act.appendChild(b); tr.appendChild(act);
+      tb.appendChild(tr);
+    });
+
+    // wishes
+    var wb = $('wishBody'); wb.textContent = '';
+    var visible = d.wishes.filter(function (w) { return !w.hidden; }).length;
+    $('wCount').textContent = '(' + visible + ' ظاهرة من ' + d.wishes.length + ')';
+    if (!d.wishes.length) wb.appendChild(el('p', 'empty', 'لا توجد تهاني بعد'));
+    d.wishes.forEach(function (w) {
+      var row = el('div', 'wish' + (w.hidden ? ' hidden' : ''));
+      var p = el('p'); p.appendChild(el('span', '', w.text)); p.appendChild(el('br'));
+      p.appendChild(el('span', 'muted', (w.name || '') + ' · ' + fmt(w.at)));
+      row.appendChild(p);
+      var act = el('div', 'act');
+      var hb = el('button', '', w.hidden ? 'إظهار' : 'إخفاء');
+      hb.onclick = function () { api('PATCH', '', { wishId: w.id, hidden: !w.hidden }).then(load).catch(function (e) { alert(e.message); }); };
+      var db = el('button', 'del', 'حذف');
+      db.onclick = function () { if (confirm('حذف هذه التهنئة نهائياً؟')) api('DELETE', '?type=wish&id=' + w.id).then(load).catch(function (e) { alert(e.message); }); };
+      act.appendChild(hb); act.appendChild(db); row.appendChild(act);
+      wb.appendChild(row);
+    });
+  }
+
+  function csv() {
+    var rows = [['الاسم', 'الرد', 'العدد', 'التاريخ']].concat(data.rsvp.list.map(function (r) {
+      return [r.name, r.attend === 'yes' ? 'سيحضر' : 'معتذر', r.attend === 'yes' ? r.guests : 0, new Date(r.at).toISOString()];
+    }));
+    var text = '﻿' + rows.map(function (r) {
+      return r.map(function (c) {
+        var s = String(c);
+        if (/^[=+\-@]/.test(s)) s = "'" + s;             // block spreadsheet formula injection
+        return '"' + s.replace(/"/g, '""') + '"';
+      }).join(',');
+    }).join('\r\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'rsvp-walid-malak.csv'; document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  $('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    token = $('token').value.trim();
+    try { sessionStorage.setItem(KEY, token); } catch (x) {}
+    load();
+  });
+  $('refresh').onclick = load;
+  $('logout').onclick = function () { try { sessionStorage.removeItem(KEY); } catch (x) {} token = ''; showLogin(''); };
+  $('csv').onclick = csv;
+  if (token) load();
+  setInterval(function () { if (token && !$('dash').hidden && !document.hidden) load(); }, 60000);
+})();
+</script>
+</body>
+</html>
