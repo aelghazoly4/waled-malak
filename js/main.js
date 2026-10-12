@@ -14,6 +14,7 @@
     venue: 'Marriott Birmingham, 3590 Grandview Pkwy, Birmingham, AL 35243',
     mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Marriott+Birmingham+3590+Grandview+Pkwy+Birmingham+AL+35243',
     phone: '',                 // «تواصل» button, e.g. '+12055550123' (empty → opens the RSVP form)
+    autoScroll: 34,            // page glides down by itself after opening, px per second (0 = off)
     api: '/api',               // backend base URL (same Vercel project)
     storageKey: 'walid-malak-invite'
   };
@@ -119,6 +120,7 @@
       onScroll();
     }, 650);
     setTimeout(function () { intro.classList.add('is-gone'); }, 1900);
+    autoScroll.later(2800);
   }
   $('#openBtn').addEventListener('click', openInvite);
   intro.addEventListener('click', function (e) { if (e.target.classList.contains('intro__door')) openInvite(); });
@@ -132,7 +134,6 @@
      REVEAL ON SCROLL
      ========================================================= */
   var revealEls = $$('.reveal, .reveal-x');
-  $$('.gallery .moment').forEach(function (el, i) { el.style.setProperty('--d', (i % 2) * 0.12 + 's'); });
   $$('.notes .note').forEach(function (el, i) { el.style.setProperty('--d', i * 0.12 + 's'); });
 
   var io = null;
@@ -256,75 +257,6 @@
   } else {
     contact.addEventListener('click', function (e) { e.preventDefault(); openRsvp(); });
   }
-  $('#navCamera').addEventListener('click', function () {
-    $('.moments__title').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-  });
-
-  /* =========================================================
-     WISHES + GUEST COUNT (from the backend)
-     ========================================================= */
-  var list = $('#wishList');
-  var emptyEl = $('#wishEmpty');
-  var guestCount = $('#guestCount');
-  var shownWishIds = {};
-
-  function wishNode(w, isNew) {
-    var li = document.createElement('li');
-    li.className = 'wish' + (isNew ? ' wish--new' : '');
-    li.textContent = '"' + w.text + '"';
-    li.setAttribute('data-id', w.id);
-    return li;
-  }
-  function renderWishes(wishes) {
-    var frag = document.createDocumentFragment();
-    shownWishIds = {};
-    wishes.forEach(function (w) { shownWishIds[w.id] = true; frag.appendChild(wishNode(w)); });
-    $$('.wish:not(.wish--empty)', list).forEach(function (n) { n.remove(); });
-    list.appendChild(frag);
-    emptyEl.hidden = wishes.length > 0;
-  }
-  function addWishTop(w) {
-    var existing = list.querySelector('[data-id="' + w.id + '"]');
-    if (existing) existing.remove();
-    shownWishIds[w.id] = true;
-    list.insertBefore(wishNode(w, true), emptyEl.nextSibling);
-    emptyEl.hidden = true;
-    list.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
-  }
-
-  var shownCount = 0;
-  function setGuestCount(n) {
-    n = Math.max(0, n | 0);
-    if (reduceMotion || !('requestAnimationFrame' in window)) { guestCount.textContent = n; shownCount = n; return; }
-    var from = shownCount, t0 = performance.now(), dur = Math.min(1400, 300 + Math.abs(n - from) * 8);
-    (function step(t) {
-      var k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
-      guestCount.textContent = Math.round(from + (n - from) * e);
-      if (k < 1) requestAnimationFrame(step); else shownCount = n;
-    })(t0);
-  }
-
-  function loadPublic() {
-    return api('/invite').then(function (d) {
-      renderWishes(d.wishes || []);
-      setGuestCount(d.attending || 0);
-    }).catch(function () { /* page still works without the backend */ });
-  }
-  loadPublic();
-  setInterval(function () { if (!document.hidden) loadPublic(); }, 60000);
-
-  function step(dir) {
-    var items = $$('.wish:not([hidden])', list);
-    var top = list.scrollTop, target = top;
-    if (dir > 0) {
-      for (var i = 0; i < items.length; i++) { if (items[i].offsetTop - list.offsetTop > top + 2) { target = items[i].offsetTop - list.offsetTop; break; } }
-    } else {
-      for (var j = items.length - 1; j >= 0; j--) { if (items[j].offsetTop - list.offsetTop < top - 2) { target = items[j].offsetTop - list.offsetTop; break; } }
-    }
-    list.scrollTo({ top: target, behavior: reduceMotion ? 'auto' : 'smooth' });
-  }
-  $('#wishUp').addEventListener('click', function () { step(-1); });
-  $('#wishDown').addEventListener('click', function () { step(1); });
 
   /* =========================================================
      MODALS
@@ -375,7 +307,6 @@
     var name = form.name.value.trim();
     var attend = form.attend.value === 'no' ? 'no' : 'yes';
     var guests = Math.max(1, Math.min(10, parseInt(form.guests.value, 10) || 1));
-    var wish = form.wish.value.trim().slice(0, 300);
     if (name.length < 2) { err.textContent = 'فضلاً اكتب الاسم'; form.name.focus(); return; }
     err.textContent = '';
 
@@ -385,16 +316,13 @@
 
     api('/rsvp', {
       method: 'POST',
-      body: { vid: VID, name: name, attend: attend, guests: guests, wish: wish, website: form.website.value }
-    }).then(function (res) {
+      body: { vid: VID, name: name, attend: attend, guests: guests, website: form.website.value }
+    }).then(function () {
       var s = store.get();
       s.rsvp = { name: name, attend: attend, guests: guests };
       store.set(s);
-      if (typeof res.attending === 'number') setGuestCount(res.attending);
-      if (res.wish) addWishTop(res.wish);
       $('#rsvpDoneText').textContent = attend === 'yes' ? 'تم تأكيد حضوركم، ننتظركم بكل حب 🤍' : 'شكراً لكم، تم استلام اعتذاركم';
       form.hidden = true; done.hidden = false;
-      form.wish.value = '';
     }).catch(function (e2) {
       err.textContent = e2.status === 429 ? 'محاولات كثيرة، حاول بعد قليل' : 'تعذّر الإرسال، تأكد من الاتصال وحاول مرة أخرى';
     }).then(function () {
@@ -404,34 +332,121 @@
   });
 
   /* =========================================================
-     SPARKLES — soft floating light particles
+     AUTO-SCROLL — after opening, the invitation glides down by itself.
+     Any touch / wheel / key hands control to the guest; it carries on
+     after a few quiet seconds and stops for good at the bottom.
+     ========================================================= */
+  var autoScroll = (function () {
+    var SPEED = CONFIG.autoScroll;
+    var IDLE = 5000;   // ms without touching before it carries on
+    var running = false, finished = false, pos = 0, last = 0, timer = 0;
+    var root = document.scrollingElement || document.documentElement;
+
+    function maxY() { return root.scrollHeight - window.innerHeight; }
+    function modalOpen() { return $$('.modal').some(function (m) { return !m.hidden; }); }
+    function later(ms) {
+      running = false;
+      clearTimeout(timer);
+      if (!finished && SPEED > 0 && !reduceMotion) timer = setTimeout(start, ms);
+    }
+    function start() {
+      if (running || finished) return;
+      if (modalOpen()) return later(IDLE);
+      running = true;
+      pos = window.pageYOffset;
+      last = performance.now();
+      requestAnimationFrame(frame);
+    }
+    function frame(t) {
+      if (!running) return;
+      // the page moved some other way (e.g. a drag on the map) → let the guest lead
+      if (Math.abs(window.pageYOffset - pos) > 30) return later(IDLE);
+      var dt = Math.min(0.05, (t - last) / 1000); last = t;
+      var end = maxY();
+      pos = Math.min(end, pos + SPEED * dt);
+      window.scrollTo(0, pos);
+      if (pos >= end - 1) { running = false; finished = true; return; }
+      requestAnimationFrame(frame);
+    }
+    ['touchstart', 'touchmove', 'wheel', 'mousedown', 'keydown', 'blur'].forEach(function (ev) {
+      window.addEventListener(ev, function () { if (opened && !finished) later(IDLE); }, { passive: true });
+    });
+    return { later: later };
+  })();
+
+  /* =========================================================
+     SPARKLES — soft light bubbles & glints drifting down the screen
      ========================================================= */
   var cv = $('#sparkles');
   var ctx = cv.getContext && cv.getContext('2d');
   if (ctx && !reduceMotion) {
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var W = 0, H = 0, parts = [];
+    var TAU = Math.PI * 2;
+    var rnd = function (a, b) { return a + Math.random() * (b - a); };
+
+    // each look is drawn once, then stamped every frame
+    var sprite = function (px, draw) {
+      var c = document.createElement('canvas');
+      c.width = c.height = px;
+      draw(c.getContext('2d'), px / 2);
+      return c;
+    };
+    var GLOW = sprite(64, function (g, m) {
+      var gr = g.createRadialGradient(m, m, 0, m, m, m);
+      gr.addColorStop(0, 'rgba(255,255,255,1)');
+      gr.addColorStop(0.22, 'rgba(255,247,250,.6)');
+      gr.addColorStop(1, 'rgba(255,240,246,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, m * 2, m * 2);
+    });
+    var BUBBLE = sprite(96, function (g, m) {
+      var r = m - 2;
+      var fill = g.createRadialGradient(m, m, r * 0.5, m, m, r);
+      fill.addColorStop(0, 'rgba(255,255,255,.05)');
+      fill.addColorStop(0.8, 'rgba(255,238,246,.22)');
+      fill.addColorStop(1, 'rgba(255,255,255,.7)');
+      g.fillStyle = fill;
+      g.beginPath(); g.arc(m, m, r, 0, TAU); g.fill();
+      var hx = m - r * 0.38, hy = m - r * 0.42, hr = r * 0.36;
+      var shine = g.createRadialGradient(hx, hy, 0, hx, hy, hr);
+      shine.addColorStop(0, 'rgba(255,255,255,.95)');
+      shine.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = shine;
+      g.beginPath(); g.arc(hx, hy, hr, 0, TAU); g.fill();
+    });
+    var STAR = sprite(64, function (g, m) {
+      g.drawImage(GLOW, m * 0.45, m * 0.45, m * 1.1, m * 1.1);
+      g.fillStyle = 'rgba(255,255,255,.95)';
+      g.beginPath();
+      g.moveTo(m, 0);
+      g.quadraticCurveTo(m, m, m * 2, m);
+      g.quadraticCurveTo(m, m, m, m * 2);
+      g.quadraticCurveTo(m, m, 0, m);
+      g.quadraticCurveTo(m, m, m, 0);
+      g.fill();
+    });
+
+    var spawn = function (fromTop) {
+      var k = Math.random(), p;
+      if (k < 0.4) p = { img: BUBBLE, s: rnd(7, 18), vy: rnd(14, 26), a: rnd(0.45, 0.8), tw: 0 };
+      else if (k < 0.86) p = { img: GLOW, s: rnd(6, 15), vy: rnd(16, 34), a: rnd(0.5, 0.95), tw: rnd(1, 2.2) };
+      else p = { img: STAR, s: rnd(9, 16), vy: rnd(10, 18), a: rnd(0.6, 1), tw: rnd(1.2, 2.4), star: true };
+      p.x = Math.random() * W;
+      p.y = fromTop ? -p.s - Math.random() * 60 : Math.random() * H;
+      p.sway = rnd(6, 20);
+      p.sp = rnd(0.4, 1.1);
+      p.ph = Math.random() * TAU;
+      return p;
+    };
     var size = function () {
       W = window.innerWidth; H = window.innerHeight;
-      cv.width = W * dpr; cv.height = H * dpr;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
       cv.style.width = W + 'px'; cv.style.height = H + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      var n = Math.round(Math.min(W, 420) * H / 11000);
-      parts = [];
-      for (var i = 0; i < n; i++) parts.push(spawn(true));
-    };
-    var spawn = function (anywhere) {
-      var cw = Math.min(W, 368);
-      return {
-        x: Math.max(0, (W - cw) / 2) + Math.random() * cw,
-        y: anywhere ? Math.random() * H : H + 10,
-        r: 0.8 + Math.random() * 1.8,
-        vy: 6 + Math.random() * 14,
-        sway: 6 + Math.random() * 14,
-        ph: Math.random() * Math.PI * 2,
-        tw: 0.6 + Math.random() * 1.6,
-        a: 0.25 + Math.random() * 0.55
-      };
+      // keep the particles already on screen (mobile toolbars resize the view while scrolling)
+      var n = Math.max(18, Math.min(48, Math.round(W * H / 9500)));
+      while (parts.length < n) parts.push(spawn(false));
+      parts.length = n;
     };
     var last = performance.now();
     var frame = function (t) {
@@ -439,18 +454,24 @@
       ctx.clearRect(0, 0, W, H);
       for (var i = 0; i < parts.length; i++) {
         var p = parts[i];
-        p.y -= p.vy * dt;
-        p.ph += dt * p.tw;
-        if (p.y < -10) parts[i] = p = spawn(false);
+        p.y += p.vy * dt;
+        p.ph += dt * p.sp;
+        if (p.y > H + p.s) parts[i] = p = spawn(true);
         var x = p.x + Math.sin(p.ph) * p.sway;
-        var al = p.a * (0.55 + 0.45 * Math.sin(p.ph * 1.7));
-        var g = ctx.createRadialGradient(x, p.y, 0, x, p.y, p.r * 3);
-        g.addColorStop(0, 'rgba(255,255,255,' + al + ')');
-        g.addColorStop(0.4, 'rgba(255,250,252,' + al * 0.5 + ')');
-        g.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.fillStyle = g;
-        ctx.beginPath(); ctx.arc(x, p.y, p.r * 3, 0, Math.PI * 2); ctx.fill();
+        var al = p.a;
+        if (p.star) al *= Math.max(0, Math.sin(p.ph * p.tw * 2));      // glints flash in and out
+        else if (p.tw) al *= 0.55 + 0.45 * Math.sin(p.ph * p.tw * 2);  // light dots shimmer
+        ctx.globalAlpha = al;
+        if (p.star) {
+          ctx.save();
+          ctx.translate(x, p.y); ctx.rotate(p.ph * 0.5);
+          ctx.drawImage(p.img, -p.s / 2, -p.s / 2, p.s, p.s);
+          ctx.restore();
+        } else {
+          ctx.drawImage(p.img, x - p.s / 2, p.y - p.s / 2, p.s, p.s);
+        }
       }
+      ctx.globalAlpha = 1;
       requestAnimationFrame(frame);
     };
     size();
