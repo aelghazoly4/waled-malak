@@ -3,7 +3,7 @@
    ========================================================= */
 
 :root {
-  --col: 23rem;                 /* 368px column — same as the original */
+  --col: 30rem;                 /* fills every phone edge to edge; centred column on bigger screens */
   --purple: #7b5a8f;
   --purple-deep: #7e5c91;
   --purple-soft: #9c84b0;
@@ -25,7 +25,7 @@
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, body { margin: 0; padding: 0; }
 body {
-  background: #fff;
+  background: #ecd3cb;
   color: var(--ink);
   font-family: var(--f-ar);
   font-size: 14.5px;
@@ -56,7 +56,7 @@ ul, ol { list-style: none; }
   margin: 0 auto;
 }
 .page { position: relative; overflow: hidden; }
-.page__spacer { height: 85px; background: #fff; }
+.page__spacer { height: 85px; }
 
 /* ---------- glass ---------- */
 .glass {

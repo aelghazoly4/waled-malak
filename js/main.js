@@ -6,15 +6,16 @@
 
   /* ---------- editable settings ---------- */
   var CONFIG = {
-    // 17 Oct 2026, 7:00 PM in Birmingham, Alabama (CDT = UTC-5).
+    // 17 Oct 2026 in Birmingham, Alabama (CDT = UTC-5) — same times as the programme.
     // The countdown is exact for guests in any country.
-    eventStart: new Date('2026-10-17T19:00:00-05:00'),
+    eventStart: new Date('2026-10-17T18:30:00-05:00'),   // استقبال الضيوف — start of the «احفظ الموعد» entry
+    countdownTo: new Date('2026-10-17T19:30:00-05:00'),  // دخول العروسين — the time shown at the top
     eventEnd:   new Date('2026-10-17T23:59:00-05:00'),
     title: 'زفاف وليد & ملاك',
     venue: 'Marriott Birmingham, 3590 Grandview Pkwy, Birmingham, AL 35243',
     mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Marriott+Birmingham+3590+Grandview+Pkwy+Birmingham+AL+35243',
     phone: '',                 // «تواصل» button, e.g. '+12055550123' (empty → opens the RSVP form)
-    autoScroll: 34,            // page glides down by itself after opening, px per second (0 = off)
+    autoScroll: 40,            // page glides down by itself after opening, px per second (0 = off)
     api: '/api',               // backend base URL (same Vercel project)
     storageKey: 'walid-malak-invite'
   };
@@ -120,7 +121,7 @@
       onScroll();
     }, 650);
     setTimeout(function () { intro.classList.add('is-gone'); }, 1900);
-    autoScroll.later(2800);
+    autoScroll.later(2000);
   }
   $('#openBtn').addEventListener('click', openInvite);
   intro.addEventListener('click', function (e) { if (e.target.classList.contains('intro__door')) openInvite(); });
@@ -203,7 +204,7 @@
   var cd = { d: $('[data-cd="d"]'), h: $('[data-cd="h"]'), m: $('[data-cd="m"]'), s: $('[data-cd="s"]') };
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function tick() {
-    var diff = Math.max(0, CONFIG.eventStart.getTime() - Date.now());
+    var diff = Math.max(0, CONFIG.countdownTo.getTime() - Date.now());
     var s = Math.floor(diff / 1000);
     var d = Math.floor(s / 86400); s -= d * 86400;
     var h = Math.floor(s / 3600); s -= h * 3600;
@@ -338,37 +339,34 @@
      ========================================================= */
   var autoScroll = (function () {
     var SPEED = CONFIG.autoScroll;
-    var IDLE = 5000;   // ms without touching before it carries on
-    var running = false, finished = false, pos = 0, last = 0, timer = 0;
+    var IDLE = 3000;   // ms without touching before it carries on
+    var running = false, finished = false, carry = 0, last = 0, timer = 0;
     var root = document.scrollingElement || document.documentElement;
 
-    function maxY() { return root.scrollHeight - window.innerHeight; }
+    function atBottom() { return window.pageYOffset >= root.scrollHeight - window.innerHeight - 2; }
     function modalOpen() { return $$('.modal').some(function (m) { return !m.hidden; }); }
     function later(ms) {
       running = false;
       clearTimeout(timer);
-      if (!finished && SPEED > 0 && !reduceMotion) timer = setTimeout(start, ms);
+      if (!finished && SPEED > 0) timer = setTimeout(start, ms);
     }
     function start() {
       if (running || finished) return;
       if (modalOpen()) return later(IDLE);
       running = true;
-      pos = window.pageYOffset;
+      carry = 0;
       last = performance.now();
       requestAnimationFrame(frame);
     }
     function frame(t) {
       if (!running) return;
-      // the page moved some other way (e.g. a drag on the map) → let the guest lead
-      if (Math.abs(window.pageYOffset - pos) > 30) return later(IDLE);
-      var dt = Math.min(0.05, (t - last) / 1000); last = t;
-      var end = maxY();
-      pos = Math.min(end, pos + SPEED * dt);
-      window.scrollTo(0, pos);
-      if (pos >= end - 1) { running = false; finished = true; return; }
+      if (atBottom()) { running = false; finished = true; return; }
+      carry += SPEED * Math.min(0.05, (t - last) / 1000); last = t;
+      var px = Math.floor(carry); // whole pixels, so every browser really moves
+      if (px > 0) { window.scrollBy(0, px); carry -= px; }
       requestAnimationFrame(frame);
     }
-    ['touchstart', 'touchmove', 'wheel', 'mousedown', 'keydown', 'blur'].forEach(function (ev) {
+    ['touchstart', 'touchmove', 'wheel', 'mousedown', 'keydown'].forEach(function (ev) {
       window.addEventListener(ev, function () { if (opened && !finished) later(IDLE); }, { passive: true });
     });
     return { later: later };
